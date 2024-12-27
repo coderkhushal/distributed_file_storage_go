@@ -75,7 +75,8 @@ func NewStore(opts StoreOpts) *Store {
 }
 func (s *Store) Has(key string) bool {
 	pathkey := CACPathTransformFunc(key)
-	_, err := os.Stat(pathkey.FullPath())
+	fullPathWithRoot := fmt.Sprintf("%s/%s", s.Root, pathkey.FullPath())
+	_, err := os.Stat(fullPathWithRoot)
 	if err != nil {
 		return false
 	}
@@ -88,8 +89,9 @@ func (s *Store) Delete(key string) error {
 		fmt.Printf("delete %s from disk ", pathkey.Filename)
 	}()
 
-	fullpathWithRoot := fmt.Sprintf("%s/%s", s.Root, pathkey.FullPath())
-	return os.RemoveAll(strings.Split(fullpathWithRoot, "/")[1])
+	firstpathnameWithRoot := fmt.Sprintf("%s/%s", s.Root, strings.Split(pathkey.Pathname, "/")[0])
+
+	return os.RemoveAll(firstpathnameWithRoot)
 }
 func (s *Store) Read(key string) (io.Reader, error) {
 	f, err := s.readStream(key)

@@ -45,7 +45,9 @@ func TestStore(t *testing.T) {
 	if err := s.writeStream(key, bytes.NewReader(data)); err != nil {
 		t.Error(err)
 	}
-
+	if ok := s.Has(key); !ok {
+		t.Error("Expected to have key %s", key)
+	}
 	r, err := s.Read(key)
 	if err != nil {
 		t.Error(err)
@@ -55,6 +57,7 @@ func TestStore(t *testing.T) {
 	if string(b) != string(data) {
 		t.Errorf("have %s want %s ", b, data)
 	}
+
 	if err := s.Delete(key); err != nil {
 		t.Error(err)
 	}
