@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 )
@@ -82,6 +81,9 @@ func (s *Store) Has(key string) bool {
 	}
 	return true
 }
+func (s *Store) Clear() error {
+	return os.RemoveAll(s.Root)
+}
 func (s *Store) Delete(key string) error {
 	pathkey := CACPathTransformFunc(key)
 
@@ -111,24 +113,26 @@ func (s *Store) readStream(key string) (io.ReadCloser, error) {
 	fullpathWithRoot := fmt.Sprintf("%s/%s", s.Root, pathKey.FullPath())
 	return os.Open(fullpathWithRoot)
 }
-
-func (s *Store) writeStream(key string, r io.Reader) error {
+func (s *Store) Write(key string, r io.Reader) (int64, error) {
+	return s.writeStream(key, r)
+}
+func (s *Store) writeStream(key string, r io.Reader) (int64, error) {
 	pathKey := s.PathTransformFunc(key)
 	pathnameWithRoot := fmt.Sprintf("%s/%s", s.Root, pathKey.Pathname)
 	if err := os.MkdirAll(pathnameWithRoot, os.ModePerm); err != nil {
-		return err
+		return 0, err
 	}
 
 	fullpathWithRoot := fmt.Sprintf("%s/%s", s.Root, pathKey.FullPath())
 	f, err := os.Create(fullpathWithRoot)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	n, err := io.Copy(f, r)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	log.Printf("written (%d) bytes to disk  %s ", n, fullpathWithRoot)
-	return nil
+
+	return n, nil
 }
